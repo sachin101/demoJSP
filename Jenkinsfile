@@ -16,17 +16,20 @@ pipeline {
 
         stage('Deploy') {
             steps {
+                // 1. Kill old process (|| true prevents failure if no process is found)
                 sh 'pkill -f demo-0.0.1-SNAPSHOT.jar || true'
                 
+                // 2. Start the new process
                 withEnv(['JENKINS_NODE_COOKIE=dontKillMe']) {
-                    // Added 'disown' to further ensure the process detaches
-                    sh 'nohup java -jar target/demo-0.0.1-SNAPSHOT.jar > app.log 2>&1 & disown'
+                    // We use /bin/bash explicitly to handle backgrounding better
+                    sh """
+                        nohup java -jar target/demo-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
+                    """
                 }
                 
-                echo 'Waiting for application to start...'
-                sleep 20 // Gives Spring Boot 20 seconds to boot up
-                
-                echo 'Application should be live at http://localhost:8082'
+                echo 'Application starting... wait 20 seconds.'
+                sleep 20
+                echo 'Check http://localhost:8082'
             }
         }
     }
