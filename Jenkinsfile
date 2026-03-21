@@ -25,15 +25,13 @@ pipeline {
             }
         }
 
-        stage('Deploy') {
-            steps {
-                // Stop any previous instance
-                sh 'pkill -f demo-0.0.1-SNAPSHOT.jar || true'
-                // Start the new one in background
-                sh 'nohup java -jar target/demo-0.0.1-SNAPSHOT.jar > app.log 2>&1 &'
-                echo 'Application deployed on http://localhost:8082'
-            }
-        }
+    stage('Docker Build & Run') {
+    steps {
+        sh 'docker build -t demo-app .'
+        sh 'docker rm -f demo-app || true'
+        sh 'docker run -d -p 8082:8082 --name demo-app demo-app'
+          }
+       }
     }
 
     post {
