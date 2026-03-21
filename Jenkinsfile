@@ -6,6 +6,7 @@ pipeline {
         maven 'Maven3'   // ← Change 'Maven3' to whatever name you set in Global Tools
         // Optionally add JDK if your build needs a specific version
         // jdk 'JDK17'
+        jdk 'JDK21'
     }
 
     stages {
