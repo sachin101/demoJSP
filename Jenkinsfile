@@ -1,42 +1,32 @@
 pipeline {
     agent any
 
-    tools {
-        maven 'Maven3'
-        jdk 'JDK21'
-    }
-
     stages {
-        stage('Build & Test') { 
+        stage('Checkout') {
             steps {
-                // Running 'package' already runs 'test' by default in Maven
-                sh 'mvn clean package'
+                checkout scm
             }
         }
 
-        stage('Deploy') {
+        stage('Build') {
             steps {
-                // 1. Kill old process (|| true prevents failure if no process is found)
-                sh 'pkill -f demo-0.0.1-SNAPSHOT.jar || true'
-                
-                // 2. Start the new process
-                withEnv(['JENKINS_NODE_COOKIE=dontKillMe']) {
-                    // We use /bin/bash explicitly to handle backgrounding better
-                    sh """
-                        nohup java -jar target/demo-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
-                    """
-                }
-                
-                echo 'Application starting... wait 20 seconds.'
-                sleep 20
-                echo 'Check http://localhost:8082'
+                sh './mvnw clean package'   // or bat 'mvnw.cmd clean package' on Windows agent
+            }
+        }
+
+        stage('Run App') {
+            steps {
+                // Runs in background; adjust sleep or use nohup/screen for real use
+                sh 'nohup ./mvnw spring-boot:run &'
+                sleep 15   // give time to start
+                echo 'App should be running on http://localhost:8080 (check console logs)'
             }
         }
     }
 
     post {
-        always { echo 'Build finished!' }
-        success { echo 'Build SUCCESS!' }
-        failure { echo 'Build FAILED!' }
+        always {
+            echo 'Build finished!'
+        }
     }
 }
